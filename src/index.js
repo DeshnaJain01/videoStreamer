@@ -1,12 +1,25 @@
 //require('dotenv').config({path: './env'}) // it is completely fine but it destroys the consistency of our code
 import dotenv from "dotenv";
 import connectDB from "./db/index.js";
+import { Error } from "mongoose";
 
 dotenv.config({
     path:'./env'
 })
  connectDB()
+.then(()=>{
+    app.on("error",(error)=>{
+        console.log("ERR:",error);
+        throw error 
+    })
+    app.listen(process.env.PORT || 8000,()=>{
 
+        console.log(`Server is running at port: ${process.env.PORT}`);
+    })
+})
+.catch((err)=>{
+    console.log("MongoDB connection failed!!!!", err);
+})
 
 
 
