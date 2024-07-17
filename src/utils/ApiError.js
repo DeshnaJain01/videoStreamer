@@ -1,3 +1,4 @@
+
 class ApiError extends Error {
     constructor(
         statusCode,
@@ -9,7 +10,7 @@ class ApiError extends Error {
         this.statusCode=statusCode
         this.data=null
         this.message=message
-        this.success=false
+        this.success=false;
         this.errors=this.errors
 
         if(stack){
@@ -20,4 +21,4 @@ class ApiError extends Error {
     }
 }
 
-export { ApiError }
+export {ApiError}

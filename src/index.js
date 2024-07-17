@@ -1,7 +1,7 @@
 //require('dotenv').config({path: './env'}) // it is completely fine but it destroys the consistency of our code
 import dotenv from "dotenv";
 import connectDB from "./db/index.js";
-import { Error } from "mongoose";
+import { app } from "./app.js";
 
 dotenv.config({
     path:'./env'
