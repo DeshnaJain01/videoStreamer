@@ -7,10 +7,12 @@ app.use(cors({
     origin:process.env.CORS_ORIGIN,
     Credential:true
 }))
-
+//limiting data
 app.use(express.json({limit:"16kb"}))
 app.use(express.urlencoded({extended:true, limit:"16kb"}))
+//public access of item stores in our public folder
 app.use(express.static("public"))
+//keeping secure cookies on users browser
 app.use(cookieParser())
 //routes import 
 import userRouter from './routes/user.routes.js'
