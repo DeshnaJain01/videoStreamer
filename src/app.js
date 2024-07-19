@@ -12,7 +12,7 @@ app.use(express.json({limit:"16kb"}))
 app.use(express.urlencoded({extended:true, limit:"16kb"}))
 //public access of item stores in our public folder
 app.use(express.static("public"))
-//keeping secure cookies on users browser
+//keeping secure cookies on users browser and allow access of cookies
 app.use(cookieParser())
 //routes import 
 import userRouter from './routes/user.routes.js'
