@@ -20,28 +20,33 @@ const registerUser= asyncHandler(async (req,res)=>{
         throw new ApiError(400,"All fields are required")
     }
     //3.check if user already exists
-    const existedUser=User.findOne({
+    const existedUser= await User.findOne({
         $or:[{username},{email}]
     })
 
     if (existedUser){
         throw new ApiError (409, "User with username or email already exists")
     }
+
     //4. check for images and avatar
-   const avatarLocalPath= req.files?.avatar[0]?.path
-    const coverImageLocalPath=req.files?.coverImage[0]?.path 
-    //check if have avatar image ... cover image is not compulsory... but avatar image is ....
+   const avatarLocalPath= req.files?.avatar[0]?.path;
+   //const coverImageLocalPath=req.files?.coverImage[0]?.path; 
+   let coverImageLocalPath;
+   if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length>0){
+    coverImageLocalPath = req.files.coverImage[0].path
+   }
+   //check if have avatar image ... cover image is not compulsory... but avatar image is ....
     if(!avatarLocalPath){
-        throw ApiError(400,"Avatar file is required")
+        throw new ApiError(400,"Avatar file is required localPathNotFound")
     }
 
     // upload image or file on cloudinary
-const avatar=await uploadOnCloudinary(avatarLocalPath)
+const avatar = await uploadOnCloudinary(avatarLocalPath)
 const coverImage= await uploadOnCloudinary(coverImageLocalPath)
  // check if your file uploaded successfully
 
  if (!avatar){
-    throw ApiError(400,"Avatar file is required")
+    throw new ApiError(400,"Avatar file is required last call")
 
  }
 
