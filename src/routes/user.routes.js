@@ -1,6 +1,8 @@
 import {Router} from "express"
-import { loginUser, logOutUser, registerUser } from "../controllers/user.controller.js"
+import { loginUser, logOutUser, refreshAccessToken, registerUser } from "../controllers/user.controller.js"
 import {upload} from "../middlewares/multer.middleware.js"
+import { verifyJWT } from "../middlewares/auth.middleware.js"
+
 const router =  Router()
 
 router.route("/register").post(
@@ -20,6 +22,7 @@ router.route("/register").post(
 router.route("/login").post(loginUser)
 //secured route using middleware
 router.route("/logout").post(verifyJWT, logOutUser)
-
+//session expired 401 req hits this end point for regenerate refresh access token
+router.route("/refresh-token").post(refreshAccessToken)
 
 export default router
