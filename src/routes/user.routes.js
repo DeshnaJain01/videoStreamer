@@ -1,5 +1,16 @@
 import {Router} from "express"
-import { ChangeCurrentPassword, deleteUserAvatar, getUserChannelProfile, loginUser, logOutUser, refreshAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js"
+import { ChangeCurrentPassword,
+     deleteUserAvatar, 
+     getCurrentUser, 
+     getUserChannelProfile,
+     getWatchHistory,
+     loginUser,
+     logOutUser, 
+     refreshAccessToken, 
+     registerUser, 
+     updateAccountDetails, 
+     updateUserAvatar, 
+     updateUserCoverImage } from "../controllers/user.controller.js"
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 
@@ -26,14 +37,20 @@ router.route("/logout").post(verifyJWT, logOutUser)
 router.route("/refresh-token").post(refreshAccessToken)
 //change password
 router.route("/change-password").post(verifyJWT,ChangeCurrentPassword)
+//get me current user
+router.route("/current-user").get(verifyJWT,getCurrentUser)
 //updating account details 
-router.route("/update-account-details").post(updateAccountDetails)
+router.route("/update-account-details").patch(verifyJWT,updateAccountDetails)
 //updating user avatar
-router.route("/update-user-avatar").post(updateUserAvatar)
+router.route("/update-user-avatar").patch(verifyJWT,upload.single("/avatar"),updateUserAvatar)
 //update user cover image
-router.route("/update-user-cover-image").post(updateUserCoverImage)
+router.route("/update-user-cover-image").patch(verifyJWT,upload.single("/coverImage"),updateUserCoverImage)
 //delete user avatar
-router.route("/delete-user-avatar").post(deleteUserAvatar)
+router.route("/delete-user-avatar").delete(verifyJWT,deleteUserAvatar)
 //to get user channel profile-followers, subscribers etc
-router.route("/get-user-channel-profile").post(getUserChannelProfile)
+router.route("/channel/:username").get(verifyJWT,getUserChannelProfile)
+//get watch history
+router.route("/history").get(verifyJWT,getWatchHistory)
+
+
 export default router
