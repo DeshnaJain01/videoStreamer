@@ -42,9 +42,9 @@ router.route("/current-user").get(verifyJWT,getCurrentUser)
 //updating account details 
 router.route("/update-account-details").patch(verifyJWT,updateAccountDetails)
 //updating user avatar
-router.route("/update-user-avatar").patch(verifyJWT,upload.single("/avatar"),updateUserAvatar)
+router.route("/update-user-avatar").patch(verifyJWT,upload.single("avatar"),updateUserAvatar)
 //update user cover image
-router.route("/update-user-cover-image").patch(verifyJWT,upload.single("/coverImage"),updateUserCoverImage)
+router.route("/update-user-cover-image").patch(verifyJWT,upload.single("coverImage"),updateUserCoverImage)
 //delete user avatar
 router.route("/delete-user-avatar").delete(verifyJWT,deleteUserAvatar)
 //to get user channel profile-followers, subscribers etc

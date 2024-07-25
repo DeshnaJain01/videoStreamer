@@ -175,8 +175,8 @@ const logOutUser = asyncHandler(async(req,res)=>{
     await  User.findByIdAndUpdate(
         req.user._id,
         {
-            $set:{
-                refreshToken:undefined
+            $unset:{
+                refreshToken:1//this removes the field from document
             }
         },
         {
@@ -271,9 +271,9 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
 
     //....updation of user detail 
     const updateAccountDetails= asyncHandler(async(req,res)=>{
-        const {fullName,email}=req.body
-        if (!fullName || !email){
-            throw new ApiError(400,"All fields are required")
+        const {fullName, email} = req.body
+        if (!fullName && !email){
+            throw new ApiError(400,"Atleast one field is required")
 
         }
         //find user and chain select to remove password
