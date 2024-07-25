@@ -4,8 +4,7 @@ import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
-import fs from "fs"
-import { subscribe } from "diagnostics_channel"
+import {CloudinaryAvatar, CloudinaryCoverImage} from "../models/cloudinary.model.js"
 //generating access and refresh token
 const generateAccessAndRefreshTokens = async(userId)=>
 {
@@ -83,7 +82,18 @@ const coverImage= await uploadOnCloudinary(coverImageLocalPath)
     username:username.toLowerCase()
 
     })
-
+    //create avatar table in the db
+const CloudinaryAvatar=await CloudinaryAvatar.create({
+    userId:user._id,
+    cloudinary_id: avatar.public_id,
+    cloudinary_secureUrl:avatar.secure_url
+})
+ //create avatar table in the db
+ const CloudinaryCoverImage=await CloudinaryCoverImage.create({
+    userId:user._id,
+    cloudinary_id: coverImage.public_id,
+    cloudinary_secureUrl:coverImage.secure_url
+})
     //find if user created 
     const createdUser= await User.findById(user._id).select(
         "-password -refreshToken"
@@ -96,7 +106,7 @@ const coverImage= await uploadOnCloudinary(coverImageLocalPath)
     //return response 
 
     return res.status(201).json(
-        new ApiResponse(200,createdUser, "User registered successfully!")
+        new ApiResponse(200,{createdUser,cloudinary, CloudinaryCoverImage}, "User registered successfully!")
     ) 
 })
 //...logining user 
@@ -161,7 +171,6 @@ const loginUser=asyncHandler(async(req,res)=>{
 })
 
 //... logout user
-
 const logOutUser = asyncHandler(async(req,res)=>{
     await  User.findByIdAndUpdate(
         req.user._id,
@@ -238,10 +247,12 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
 
 })
 //....update or changing the password
-const ChangeCurrentPassword=asyncHandler(async(req,res)=>{
+const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
     const {oldPassword, newPassword}=req.body
     //user id from db 
+    //console.log("************ user", User);
     const user= await User.findById(req.user?._id)
+  //  console.log("************ user", user);
     const isPasswordCorrect= await user.isPasswordCorrect(oldPassword)
     if(!isPasswordCorrect){
         throw new ApiError(400, "invalid old password")
@@ -304,16 +315,31 @@ const ChangeCurrentPassword=asyncHandler(async(req,res)=>{
            req.user?._id,
             {
                 $set :{
-                    avatar:avatar.url
+                    avatar:avatar.url,
+                    cloudinary_id: avatar.public_id,
+                    cloudinary_secureId:avatar.secure_url
                 }
             },
             {new:true}
         ).select("-password")
+        //update the new avatar info of cloudinary in db
+        const cloudinaryAvatar= await CloudinaryAvatar.findByIdAndUpdate(
+            req.cloudinaryAvatar?.userId,
+             {
+                 $set :{
+                    
+                     cloudinary_id: avatar.public_id,
+                     cloudinary_secureId:avatar.secure_url
+                 }
+             },
+             {new:true}
+         )
+        
 
         return res 
         .status(200)
         .json(
-            new ApiResponse(200, user, "Avatar  updated Successfully")
+            new ApiResponse(200, {user, cloudinaryAvatar }, "Avatar  updated Successfully")
         )
 
     })
@@ -337,7 +363,49 @@ const ChangeCurrentPassword=asyncHandler(async(req,res)=>{
             req.user?._id,
             {
                 $set :{
-                    coverImage:coverImage.url
+                    coverImage:coverImage.url,
+                    
+                }
+            },
+            {new:true}
+        ).select("-password")
+        const cloudinaryCoverImage= await CloudinaryCoverImage.findByIdAndUpdate(
+            req.cloudinaryCoverImage?.userId,
+             {
+                 $set :{
+                    
+                     cloudinary_id: coverImage.public_id,
+                     cloudinary_secureId:coverImage.secure_url
+                 }
+             },
+             {new:true}
+         )
+        return res 
+        .status(200)
+        .json(
+            new ApiResponse(200, {user, cloudinaryCoverImage}, "CoverImage updated Successfully")
+        )
+
+    })
+    //.... deleting the avatar image
+    const deleteUserAvatar=asyncHandler(async(req,res)=>{
+        const user= await User.findById(
+            req.user?.cloudinary_id)
+            if(!cloudinary_id){
+                throw new ApiError(404,"Image not found")
+            }
+            const deleteAvatar= await deleteOnCloudinary
+            if(!deleteAvatar){
+                throw new ApiError(400,"Error while deleting the avatar")
+            }
+        //delete the old avatar from db
+        const userAfterImageDeleted=await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $set :{
+                    avatar:"",
+                    cloudinary_id: "",
+                    cloudinary_secureId:""
                 }
             },
             {new:true}
@@ -346,9 +414,8 @@ const ChangeCurrentPassword=asyncHandler(async(req,res)=>{
         return res 
         .status(200)
         .json(
-            new ApiResponse(200, user, "CoverImage updated Successfully")
+            new ApiResponse(200, user, "avatar deleted Successfully")
         )
-
     })
 
     //...user channel info like no.of subcriber or subscribed
@@ -426,6 +493,52 @@ const ChangeCurrentPassword=asyncHandler(async(req,res)=>{
 
     })
 
+    const getWatchHistory = asyncHandler(async(req,res)=>{
+       const user= await User.aggregate([
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+                pipeline:[{
+                    $lookup:{
+                        from:"users",
+                        localField:"owner",
+                        foreignField:"_id",
+                        as:"owner",
+                        pipeline:[{
+                            $project:{
+                                fullName:1,
+                                username:1,
+                                avatar:1
+                            }
+                        }]
+                    }
+                },
+            {
+               $addFields:{
+                owner:{
+                    $first:"$owner"
+                }
+               } 
+            }]
+
+            }
+        }
+
+       ])
+
+       return res.status(200)
+       .json(new ApiResponse(200,user[0].watchHistory,
+        "Watch History fetched successfully"
+       ))
+    })
 
 
 
@@ -438,5 +551,8 @@ export {registerUser,
         updateAccountDetails,
         updateUserAvatar,
         updateUserCoverImage,
+        deleteUserAvatar,
+        getUserChannelProfile,
+        getWatchHistory
         
     }
