@@ -19,7 +19,7 @@ const generateAccessAndRefreshTokens = async(userId)=>
         await user.save({validateBeforeSave:false})// this validation field check is imposed because save is a mongoose method so every time we save it will be kicked in for other field as well so to avoid that we use validateBeforeSave field and mark is as false 
         return {accessToken, refreshToken}
     } catch (error) {
-        throw new ApiError(500,"Something went wrong while generating referesh and access token")
+        return res.status(500).json(new ApiError(500,"Something went wrong while generating referesh and access token"))
         
     }
 }
@@ -38,7 +38,7 @@ const registerUser= asyncHandler(async (req,res)=>{
     )
     //if any field is empty then throw error
     {
-        throw new ApiError(400,"All fields are required")
+        return res.status(400).json(new ApiError(400,"All fields are required"))
     }
     //3.check if user already exists
     const existedUser= await User.findOne({
@@ -46,7 +46,7 @@ const registerUser= asyncHandler(async (req,res)=>{
     })
 
     if (existedUser){
-        throw new ApiError (409, "User with username or email already exists")
+        return res.status(409).json(new ApiError (409, "User with username or email already exists"))
     }
 
     //4. check for images and avatar
@@ -58,8 +58,8 @@ const registerUser= asyncHandler(async (req,res)=>{
    }
    //check if have avatar image ... cover image is not compulsory... but avatar image is ....
     if(!avatarLocalPath){
-        throw new ApiError(400,"Avatar file is required localPathNotFound")
-    }
+        return res.status(400).json(new ApiError(400,"Avatar file is required localPathNotFound"))
+        }
 
     // upload image or file on cloudinary
 const avatar = await uploadOnCloudinary(avatarLocalPath)
@@ -67,7 +67,8 @@ const coverImage= await uploadOnCloudinary(coverImageLocalPath)
  // check if your file uploaded successfully
 
  if (!avatar){
-    throw new ApiError(400,"Avatar file is required last call")
+    return res.status(400).json(new ApiError(400,"Avatar file is required last call"))
+     
 
  }
 
@@ -83,13 +84,13 @@ const coverImage= await uploadOnCloudinary(coverImageLocalPath)
 
     })
     //create avatar table in the db
-const CloudinaryAvatar=await CloudinaryAvatar.create({
+const cloudinaryAvatar=await CloudinaryAvatar.create({
     userId:user._id,
     cloudinary_id: avatar.public_id,
     cloudinary_secureUrl:avatar.secure_url
 })
  //create avatar table in the db
- const CloudinaryCoverImage=await CloudinaryCoverImage.create({
+ const cloudinaryCoverImage=await CloudinaryCoverImage.create({
     userId:user._id,
     cloudinary_id: coverImage.public_id,
     cloudinary_secureUrl:coverImage.secure_url
@@ -100,13 +101,24 @@ const CloudinaryAvatar=await CloudinaryAvatar.create({
     )
     //check if user create
     if (!createdUser){
-        throw new ApiError(500, "Something went wrong while registering the user")
+        return res.status(500).json(new ApiError(500, "Something went wrong while registering the user"))
+         
+
+    }
+    if (!cloudinaryAvatar){
+        return res.status(500).json(new ApiError(500, "Something went wrong while pushing the avatar to db the user"))
+         
+
+    }
+    if (!cloudinaryCoverImage){
+        return res.status(500).json(new ApiError(500, "Something went wrong while pushing the cover Image to  the user"))
+         
 
     }
     //return response 
 
     return res.status(201).json(
-        new ApiResponse(200,{createdUser,cloudinary, CloudinaryCoverImage}, "User registered successfully!")
+        new ApiResponse(200,{createdUser,cloudinaryAvatar, cloudinaryCoverImage}, "User registered successfully!")
     ) 
 })
 //...logining user 
@@ -124,7 +136,7 @@ const loginUser=asyncHandler(async(req,res)=>{
     //email or username is required
     //if(!(username|| email))
     if(!username && !email){
-        throw new ApiError(400,"username or password is required")  
+        return res.status(400).json(new ApiError(400,"username or password is required"))  
     }
     //2. check  if user exist in the db or not ?
     const user=await User.findOne({
@@ -133,13 +145,13 @@ const loginUser=asyncHandler(async(req,res)=>{
 
     // if user not found then 
     if (!user){
-        throw new ApiError(404,"User Does not exist")
+        return res.status(404).json(new ApiError(404,"User Does not exist"))
     }
     //3.check if the password provided is correct from the user returned from req body 
     const isPasswordValid= await user.isPasswordCorrect(password)
     //if password is incorrect 
     if (!isPasswordValid){
-        throw new ApiError(401,"Invalid user credentials ")
+        return res.status(401).json(new ApiError(401,"Invalid user credentials "))
     }
     //4.call access and refresh token method that u made in the top because it is going to be used number of times 
     const {accessToken, refreshToken}=await generateAccessAndRefreshTokens(user._id)
@@ -147,6 +159,8 @@ const loginUser=asyncHandler(async(req,res)=>{
     //or we can simply we can call db 
    const loggedInUser= await User.findById(user._id).
    select("-password -refreshToken")
+   user.refreshToken=refreshToken //added this object in user 
+        await user.save({validateBeforeSave:false})
 
    //5.  now we gotta send cookies 
    //so first we have to design somee objects
@@ -163,7 +177,7 @@ const loginUser=asyncHandler(async(req,res)=>{
             new ApiResponse(
                 200,
                 {
-                    user:loggedInUser,accessToken,refreshToken
+                    user:loggedInUser
                 },
                 "User logged in Successfully"
             )
@@ -202,7 +216,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
     const incomingRefreshToken = req.cookies.
         refreshToken || req.body.refreshToken
     if (!incomingRefreshToken){
-        throw new ApiError(401, "Unauthorized Request")
+        return res.status(401).json(new ApiError(401, "Unauthorized Request"))
     }
     //decode the token 
     try {
@@ -214,11 +228,11 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         // we can get the info if user 
          const user = await User.findById(decodedToken?._id)  
          if (!user){
-            throw new ApiError(401, "invalid refresh token")
+            return res.status(401).json(new ApiError(401, "invalid refresh token"))
         }
         //if the user is matched then we gotta check whether refresh token matches or not 
         if (incomingRefreshToken!==user?.refreshToken){
-            throw new ApiError(401,"Refresh token is expired or used")
+            return res.status(401).json(new ApiError(401,"Refresh token is expired or used"))
         }
         //to send in cookies we need to make a options
         const options={
@@ -239,9 +253,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
      ) )
     
     } catch (error) {
-        throw new ApiError(401,error?.message||"Invalid refresh token")
-
-        
+        return res.status(401).json(new ApiError(401,error?.message||"Invalid refresh token")) 
     }
     
 
@@ -255,7 +267,7 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
   //  console.log("************ user", user);
     const isPasswordCorrect= await user.isPasswordCorrect(oldPassword)
     if(!isPasswordCorrect){
-        throw new ApiError(400, "invalid old password")
+        return res.staus(400).json(new ApiError(400, "invalid old password"))
     }
     user.password=newPassword
     await user.save({validateBeforeSave:false})
@@ -271,11 +283,16 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
 
     //....updation of user detail 
     const updateAccountDetails= asyncHandler(async(req,res)=>{
+        console.log(typeof req.body)
+        console.log(req.body)
         const {fullName, email} = req.body
+        console.log(fullName, email)
         if (!fullName && !email){
-            throw new ApiError(400,"Atleast one field is required")
+            return res.status(400).json(new ApiError(400,"Atleast one field is required"))
 
         }
+        console.log("Testtttt")
+        console.log(req.user)
         //find user and chain select to remove password
        const user= User.findByIdAndUpdate(
             req.user?._id,
@@ -285,13 +302,29 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
                     email
                 }
             },
-            {
+            { 
                 new:true
             }
-        ).select("-password")
-        
-        return res.status(200)
-        .json(new ApiResponse (200,user,"Account updated successfully" ))
+        )
+
+        User.findByIdAndUpdate( req.user?._id,{
+            fullName,
+            email
+        }, 
+            function (err, docs) { 
+            if (err){ 
+            console.log(err) 
+            } 
+            else{ 
+                return res.status(200)
+                .json(new ApiResponse (200, docs,"Account updated successfully" ))
+            } 
+            }); 
+
+        // const user = {}
+        // console.log(user)
+        // return res.status(200)
+        // .json(new ApiResponse (200, user,"Account updated successfully" ))
 
 
     })
@@ -301,13 +334,13 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
         // get the file first 
         const avatarLocalPath=req.file?.path
         if(!avatarLocalPath){
-            throw new ApiError(400,"Avatar file is missing ")
+            return res.status(400).json(new ApiError(400,"Avatar file is missing "))
         }
         //upload  the new avatar cloudinary 
         const avatar = await uploadOnCloudinary
             (avatarLocalPath)
         if (!avatar.url){
-            throw new ApiError (400,"Error while uploading on avatar")
+            return res.status(400).json(new ApiError (400,"Error while uploading on avatar"))
 
         }
         //update the new avatar in db
@@ -334,9 +367,8 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
              },
              {new:true}
          )
-        
-
-        return res 
+      
+         return res 
         .status(200)
         .json(
             new ApiResponse(200, {user, cloudinaryAvatar }, "Avatar  updated Successfully")
@@ -349,13 +381,13 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
         // get the file of coverImage first 
         const coverImageLocalPath=req.file?.path
         if(!coverImageLocalPath){
-            throw new ApiError(400,"cover Image file is missing ")
+            return res.status(400).json(new ApiError(400,"cover Image file is missing "))
         }
         //upload  the new coverImge cloudinary 
         const coverImage = await uploadOnCloudinary
             (coverImageLocalPath)
         if (!coverImage.url){
-            throw new ApiError (400,"Error while uploading on coverImage")
+            return res.status(400).json(new ApiError (400,"Error while uploading on coverImage"))
 
         }
         //update the new coverImage in db
@@ -392,11 +424,11 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
         const user= await User.findById(
             req.user?.cloudinary_id)
             if(!cloudinary_id){
-                throw new ApiError(404,"Image not found")
+                return res.status(404).json(new ApiError(404,"Image not found"))
             }
             const deleteAvatar= await deleteOnCloudinary
             if(!deleteAvatar){
-                throw new ApiError(400,"Error while deleting the avatar")
+                return res.status(400).json(new ApiError(400,"Error while deleting the avatar"))
             }
         //delete the old avatar from db
         const userAfterImageDeleted=await User.findByIdAndUpdate(
@@ -422,7 +454,7 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
     const getUserChannelProfile=asyncHandler(async(req,res)=>{
         const {username}=req.params
         if (!username?.trim()){
-            throw new ApiError(400,"Username is missing ")
+            return res.status(400).json(new ApiError(400,"Username is missing "))
         }
         //pipeline
         const channel= await User.aggregate([
@@ -486,7 +518,7 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
         ])
         //channel 
         if (!channel?.length){
-            throw new ApiError(404,"channel does not exists")
+            return res.status(404).json(new ApiError(404,"channel does not exists"))
         }
         return res.status(200)
         .json(new ApiResponse(200,channel[0],"User channel fetched successfully")) 
