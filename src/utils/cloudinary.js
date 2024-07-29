@@ -20,7 +20,7 @@ import fs from "fs"
             //file has been successfully uploaded
             //console.log(`file is uploaded on cloudinary`,response.url)
            //after successful upload to cloudinary we gotta unlink it from the localpath
-            fs.unlinkSync(localFilePath)
+            fs.unlinkSync(localFilePath) // glt hai ye
             return response;
             
         } catch (error) {
@@ -29,9 +29,19 @@ import fs from "fs"
             return null;
         }
     }
+    const deleteOnCloudinary = async(cloudinaryFilePath)=>{
+        try{
+            if (!cloudinaryFilePath) return null
+            //delete image from cloudinary
+            const response=await cloudinary.uploader.destroy(cloudinaryFilePath);
+            return response;
+        }catch (error){
+            return null;
+        }
+    }
     
 
-export {uploadOnCloudinary}
+export {uploadOnCloudinary,deleteOnCloudinary}
    
     
    
