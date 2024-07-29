@@ -86,12 +86,14 @@ const coverImage= await uploadOnCloudinary(coverImageLocalPath)
     //create avatar table in the db
 const cloudinaryAvatar=await CloudinaryAvatar.create({
     userId:user._id,
+    avatar:avatar.url,
     cloudinary_id: avatar.public_id,
     cloudinary_secureUrl:avatar.secure_url
 })
  //create avatar table in the db
  const cloudinaryCoverImage=await CloudinaryCoverImage.create({
     userId:user._id,
+    coverImage:coverImage.url,
     cloudinary_id: coverImage.public_id,
     cloudinary_secureUrl:coverImage.secure_url
 })
@@ -277,55 +279,51 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
     })
     //....get the current user 
     const getCurrentUser=asyncHandler(async(req,res)=>{
+        const user=req.user
+        if(!user){
+            return res.status(404).json(new ApiError(404,"User not found"))
+        }
         return res.status(200)
-        .json(200, req.user,"current user fetched successfully")
+        .json(new ApiResponse(200,user,"current user fetched successfully"))
     })
 
     //....updation of user detail 
     const updateAccountDetails= asyncHandler(async(req,res)=>{
-        console.log(typeof req.body)
-        console.log(req.body)
+        //console.log(typeof req.body)
+       // console.log(req.body)
         const {fullName, email} = req.body
-        console.log(fullName, email)
-        if (!fullName && !email){
+       // console.log(fullName, email)
+        if (!fullName || !email){
             return res.status(400).json(new ApiError(400,"Atleast one field is required"))
 
         }
-        console.log("Testtttt")
-        console.log(req.user)
+       // console.log("Testtttt")
+       // console.log(req.user)
         //find user and chain select to remove password
-       const user= User.findByIdAndUpdate(
+       const user= await User.findByIdAndUpdate(
             req.user?._id,
             {
                 $set:{
-                    fullName,
-                    email
+                      fullName,
+                      email
                 }
             },
             { 
-                new:true
+                new:true,
+               runValidators: true, // Ensure validation is run
+            //useFindAndModify: false
             }
-        )
-
-        User.findByIdAndUpdate( req.user?._id,{
-            fullName,
-            email
-        }, 
-            function (err, docs) { 
-            if (err){ 
-            console.log(err) 
-            } 
-            else{ 
-                return res.status(200)
-                .json(new ApiResponse (200, docs,"Account updated successfully" ))
-            } 
-            }); 
-
-        // const user = {}
-        // console.log(user)
-        // return res.status(200)
-        // .json(new ApiResponse (200, user,"Account updated successfully" ))
-
+        ).select("-password, -refreshToken")
+        //console.log(user)
+        
+        if(!user){
+            return res.status(404).json(new ApiError(500,  "Failed to update the user"))
+        }
+                
+        // Log the response object
+        console.log("Response object:", {fullName,email});
+        return res.status(200).json(new ApiResponse(200,{fullName,email },"Account updated successfully" ))
+        
 
     })
     //...updating file or we call it avatar 
@@ -348,33 +346,62 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
            req.user?._id,
             {
                 $set :{
-                    avatar:avatar.url,
-                    cloudinary_id: avatar.public_id,
-                    cloudinary_secureId:avatar.secure_url
+                    avatar:avatar.url                   
                 }
             },
-            {new:true}
-        ).select("-password")
+            {
+                new:true
+            }
+        ).select("-password, -refreshToken")
+        if(!user){
+            console.log("user")
+            return res.status(500).json(new ApiError(500,"something went wrong while updating user db "))
+          }
+
+          const userId = req.user?._id;
+        // Log userId for debugging
+        console.log("userId:", userId);
         //update the new avatar info of cloudinary in db
         const cloudinaryAvatar= await CloudinaryAvatar.findByIdAndUpdate(
-            req.cloudinaryAvatar?.userId,
+            userId,
+          
              {
-                 $set :{
-                    
-                     cloudinary_id: avatar.public_id,
-                     cloudinary_secureId:avatar.secure_url
+                $set:{
+                     avatar:avatar.url,
+                     cloudinary_id:avatar.public_id,
+                     cloudinary_secureUrl:avatar.secure_url
+                     //avatar,
+                     /* cloudinary_id,
+                     cloudinary_secureId */
                  }
-             },
-             {new:true}
+                },
+             
+             {  new:true,
+                runValidators: true,
+                useFindAndModify:false
+
+             }
          )
-      
+         
+      const response = {
+        user: {
+            avatar: user.avatar
+        },
+        cloudinaryAvatar: {
+            avatar: avatar.url,
+            cloudinary_id: avatar.public_id,
+            cloudinary_secureUrl: avatar.secure_url
+        }
+    };
+
+    // Log the response object
+    console.log("Response object:", response);
          return res 
         .status(200)
         .json(
-            new ApiResponse(200, {user, cloudinaryAvatar }, "Avatar  updated Successfully")
+            new ApiResponse(200, response , "Avatar  updated Successfully")
         )
-
-    })
+     })
    
     //...updating cover image 
     const updateUserCoverImage = asyncHandler(async(req,res)=>{
@@ -395,27 +422,45 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
             req.user?._id,
             {
                 $set :{
-                    coverImage:coverImage.url,
+                    coverImage:coverImage.url
                     
                 }
             },
-            {new:true}
-        ).select("-password")
+            {
+                new:true
+            }
+        ).select("-password, -refreshToken")
+        const userId = req.user?._id;
         const cloudinaryCoverImage= await CloudinaryCoverImage.findByIdAndUpdate(
-            req.cloudinaryCoverImage?.userId,
+            userId,
              {
                  $set :{
-                    
+                    coverImage:coverImage.url,
                      cloudinary_id: coverImage.public_id,
                      cloudinary_secureId:coverImage.secure_url
                  }
              },
-             {new:true}
+             {
+                new:true,
+                runValidators: true,
+                useFindAndModify:false
+            }
          )
+         const response = {
+            user: {
+                coverImage: user.coverImage
+            },
+            cloudinaryCoverImage: {
+                coverImage: coverImage.url,
+                cloudinary_id: coverImage.public_id,
+                cloudinary_secureUrl: coverImage.secure_url
+            }
+        };
+        console.log("Response object:", response);
         return res 
         .status(200)
         .json(
-            new ApiResponse(200, {user, cloudinaryCoverImage}, "CoverImage updated Successfully")
+            new ApiResponse(200, response, "CoverImage updated Successfully")
         )
 
     })
@@ -441,12 +486,12 @@ const ChangeCurrentPassword = asyncHandler(async(req,res)=>{
                 }
             },
             {new:true}
-        ).select("-password")
+        ).select("-password, -refreshToken")
 
         return res 
         .status(200)
         .json(
-            new ApiResponse(200, user, "avatar deleted Successfully")
+            new ApiResponse(200, userAfterImageDeleted, "avatar deleted Successfully")
         )
     })
 
