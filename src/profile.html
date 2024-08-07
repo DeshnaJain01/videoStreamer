@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+   
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="profile.css">
+    <title>Your Profile</title>
+</head>
+<body>
+    <div class="channel-header">
+        <img id="cover-image" class="cover-image" alt="Cover Image">
+        <div class="channel-info">
+            <img id="avatar" class="avatar" alt="Avatar">
+            <div class="channel-details">
+                <h1 id="username" class="username"></h1>
+                <div class="subscribe-info">
+                    <span id="subscribers" class="subscribers"></span>
+                    <button id="subscribe-button" class="subscribe-button">Subscribe</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h2>Uploads</h2>
+        <div id="video-grid" class="video-grid">
+            <!-- Video cards will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+       
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const token1 = localStorage.getItem('accessToken'); // Get token from local storage
+           console.log(document.cookie);
+            
+            function getCookie(token1) {
+                const value = `; ${document.cookie}`;                
+                const parts = value.split(`; ${token1}=`);               
+                if (parts.length === 2) {
+                    return parts.pop().split(';').shift();
+                } else {
+                console.log(`Cookie ${token1} not found.`);
+                return undefined;
+            }
+
+            const token = getCookie('accessToken'); // Get token from cookies
+          
+
+            if (!token) {
+                console.error('No auth token found');
+                alert('You need to log in first.');
+                window.location.href = 'loginSignUp.html'; // Redirect to login page
+                return;
+            }
+          
+            const channelApiUrl = 'http://localhost:8000/api/v1/users/current-user';
+           
+            console.log('Fetching channel data...');
+           // Fetch channel data
+           fetch(channelApiUrl, {
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}` // Include token in headers
+                },
+                credentials: 'include' // Ensure cookies are sent with the request
+            })
+            .then(response => {
+                console.log('Channel response status:', response.status);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert('Unauthorized access. Please log in again.');
+                        window.location.href = 'loginSignUp.html'; // Redirect to login page
+                        throw new Error('Unauthorized');
+                    } else {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                }
+                return response.json();
+            })
+            .then(responseData => {
+                const owner = data.data._id;
+                console.log('Channel data received:', responseData);
+                const channelData = responseData.data;
+                // Update the profile page with the fetched data
+                document.getElementById('cover-image').src = channelData.coverImage;
+                document.getElementById('avatar').src = channelData.avatar;
+                document.getElementById('channel-name').textContent = channelData.username;
+                // document.getElementById('subscribers').textContent = `${channelData.subscribers} subscribers`;
+                const videosApiUrl = `http://localhost:8000/api/v1/videos/:owner`;
+            
+             
+             // Fetch videos data
+                    return fetch(videosApiUrl, {
+                
+                method:'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}` // Include token in headers
+                },
+                credentials: 'include' // Ensure cookies are sent with the request
+            })
+            .then(response => {
+                console.log('Videos response status:', response.status);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert('Unauthorized access. Please log in again.');
+                        window.location.href = 'loginSignUp.html'; // Redirect to login page
+                        throw new Error('Unauthorized');
+                    } else {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                }
+                return response.json();
+            })
+            .then(videosData => {
+                console.log('Videos data received:', videosData);
+                const videoGrid = document.getElementById('video-grid');
+                const videoList = videosData.data.data; // Access the videos array
+
+                videoList.forEach(video => {
+                    const videoCard = document.createElement('div');
+                    videoCard.className = 'video-card';
+
+                    const videoThumbnail = document.createElement('img');
+                    videoThumbnail.className = 'video-thumbnail';
+                    videoThumbnail.src = video.videoFile;
+
+                    const videoTitle = document.createElement('h3');
+                    videoTitle.className = 'video-title';
+                    videoTitle.textContent = video.title;
+
+                    const videoDescription = document.createElement('p');
+                    videoDescription.className = 'video-description';
+                    videoDescription.textContent = video.description;
+
+                    videoCard.appendChild(videoThumbnail);
+                    videoCard.appendChild(videoTitle);
+                    videoCard.appendChild(videoDescription);
+                    videoGrid.appendChild(videoCard);
+                });
+            })
+            .catch(error => console.error('Error fetching videos data:', error));
+        });
+    }})
+    </script>
+</body>
+</html>

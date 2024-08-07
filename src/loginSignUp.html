@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="loginSignUp.css">
+    <title>Login & Signup</title>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="form-toggle">
+                <button id="login-btn">Login</button>
+                <button id="signup-btn">Sign Up</button>
+            </div>
+            <div id="login-form" class="form-content">
+                <h2>Login</h2>
+                <form id="login-form-element" method="POST">
+                    <label for="login-email">Email:</label>
+                    <input type="email" id="login-email" required>
+                    <label for="login-password">Password:</label>
+                    <input type="password" id="login-password" required>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+            <div id="signup-form" class="form-content">
+                <h2>Sign Up</h2>
+                <form id="signup-form-element" method="POST">
+                    <label for="signup-username">Username:</label>
+                    <input type="text" id="signup-username" required>
+                    <label for="signup-email">Email:</label>
+                    <input type="email" id="signup-email" required>
+                    <label for="signup-password">Password:</label>
+                    <input type="password" id="signup-password" required>
+                    <button type="submit">Sign Up</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script >
+        document.addEventListener('DOMContentLoaded', function() {
+    const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const loginFormElement = document.getElementById('login-form-element');
+    const signupFormElement = document.getElementById('signup-form-element');
+
+    // Check if elements are found
+    if (!loginBtn || !signupBtn || !loginForm || !signupForm || !loginFormElement || !signupFormElement) {
+        console.error('One or more elements are not found in the DOM.');
+        return;
+    }
+
+    loginBtn.addEventListener('click', function() {
+        loginForm.classList.add('active');
+        signupForm.classList.remove('active');
+    });
+
+    signupBtn.addEventListener('click', function() {
+        signupForm.classList.add('active');
+        loginForm.classList.remove('active');
+    });
+
+    // Initialize the form visibility
+    loginForm.classList.add('active');
+
+    // Handle login form submission
+    loginFormElement.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/users/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Login successful');
+                // Redirect to profile page
+                window.location.href = 'profile.html'; // Update this URL as needed
+            } else {
+                alert('Login failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    // Handle sign-up form submission
+    signupFormElement.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/users/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Sign-up successful');
+                // Redirect to profile page
+                window.location.href = 'profile.html'; // Update this URL as needed
+            } else {
+                alert('Sign-up failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+});
+
+    </script>
+</body>
+</html>

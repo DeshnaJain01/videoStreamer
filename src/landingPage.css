@@ -1,0 +1,75 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #eac9c9;
+}
+.header, .footer {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    
+}
+.header .container, .footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.site-name {
+    font-size: 1.5em;
+    text-decoration: none;
+    color: #fff;
+}
+.nav, .footer-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.nav a, .footer-nav a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 1em;
+    margin:0 15px;
+}
+.hero {
+    background: url('hero-image.jpg') no-repeat center center/cover;
+    height: 400px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.hero h1 {
+    font-size: 3em;
+    margin: 0;
+}
+.content {
+    padding: 20px;
+    text-align: center;
+}
+.content h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+.content p {
+    font-size: 1.2em;
+    line-height: 1.6;
+}
+.cta {
+    margin-top: 20px;
+}
+.cta button {
+    padding: 10px 20px;
+    font-size: 1em;
+    color: #fff;
+    background-color: #333;
+    border: none;
+    cursor: pointer;
+}
+.cta button:hover {
+    background-color: #555;
+}

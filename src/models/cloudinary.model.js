@@ -16,7 +16,7 @@ const cloudinaryAvatarSchema = new mongoose.Schema({
         required:true
     } 
 });
- const CloudinaryAvatar = mongoose.model('CloudinaryAvatar', cloudinaryAvatarSchema);
+ const CloudinaryAvatar = mongoose.model("CloudinaryAvatar", cloudinaryAvatarSchema);
 const cloudinaryCoverImageSchema = new mongoose.Schema({
     userId: { 
         type: mongoose.Schema.Types.ObjectId,
@@ -35,7 +35,7 @@ const cloudinaryCoverImageSchema = new mongoose.Schema({
         required:true
     } 
 });
-const CloudinaryCoverImage= mongoose.model('CloudinaryCoverImage', cloudinaryCoverImageSchema);
+const CloudinaryCoverImage= mongoose.model("CloudinaryCoverImage", cloudinaryCoverImageSchema);
 
 export{CloudinaryAvatar,
     CloudinaryCoverImage}

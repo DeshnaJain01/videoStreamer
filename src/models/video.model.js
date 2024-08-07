@@ -41,4 +41,32 @@ const videoSchema=new mongoose.Schema(
     }
 )
 videoSchema.plugin(mongooseAggregatePaginate)
-export const Video = mongoose.model("Video",videoSchema)
+const Video = mongoose.model("Video",videoSchema);
+
+const cloudinaryVideoSchema=new mongoose.Schema(
+    {
+        videoId: { 
+            type: mongoose.Schema.Types.ObjectId,
+             ref: "Video" },
+        videoUrl:{
+            type:String,
+            required:true
+        },
+        cloudinaryPublicId:{
+            type:String,
+            required:true
+        },
+        cloudinarySecureUrl:{
+            type:String,
+            required:true
+        },
+        duration:{
+            type:Number, // from cloudinary
+            required:true
+        }
+    },
+    {
+        timestamps:true
+    });
+const CloudinaryVideo=new mongoose.model("CloudinaryVideo",cloudinaryVideoSchema);
+export{Video, CloudinaryVideo}

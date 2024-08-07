@@ -124,7 +124,7 @@ const cloudinaryAvatar=await CloudinaryAvatar.create({
     ) 
 })
 //...logining user 
-const loginUser=asyncHandler(async(req,res)=>{
+const loginUser=asyncHandler(async(req,res)=>{  
     // requesting data from body   
     //username or password 
     // find user 
@@ -167,8 +167,10 @@ const loginUser=asyncHandler(async(req,res)=>{
    //5.  now we gotta send cookies 
    //so first we have to design somee objects
    const options ={
-    httpOnly:true,
-    secure:true
+    httpOnly:false,
+    secure:process.env.NODE_ENV='development',
+    sameSite: 'Strict',
+    //path: '/'  
    }
    // now return the response 
    return res
@@ -179,7 +181,7 @@ const loginUser=asyncHandler(async(req,res)=>{
             new ApiResponse(
                 200,
                 {
-                    user:loggedInUser
+                    user:loggedInUser, accessToken,refreshToken 
                 },
                 "User logged in Successfully"
             )
