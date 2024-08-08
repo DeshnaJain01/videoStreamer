@@ -167,9 +167,9 @@ const loginUser=asyncHandler(async(req,res)=>{
    //5.  now we gotta send cookies 
    //so first we have to design somee objects
    const options ={
-    httpOnly:false,
-    secure:process.env.NODE_ENV='development',
-    sameSite: 'Strict',
+    httpOnly:true,
+    secure:true,
+    //sameSite: 'Strict',
     //path: '/'  
    }
    // now return the response 

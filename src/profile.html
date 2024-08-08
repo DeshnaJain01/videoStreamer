@@ -9,16 +9,26 @@
     <title>Your Profile</title>
 </head>
 <body>
+    <div class="header">
+        <div class="container">
+            <a href="index.html" class="site-name">videoStreamer</a>
+            <nav class="nav">
+                <a href="#">updateProfile </a>
+                <a href="#">updateCoverImage </a>
+                <a href="#">changePassword</a>
+                <a href="#">Contact</a>
+                <span class="logout"></a>
+                
+            </nav>
+        </div>
+    </div>
     <div class="channel-header">
         <img id="cover-image" class="cover-image" alt="Cover Image">
         <div class="channel-info">
             <img id="avatar" class="avatar" alt="Avatar">
             <div class="channel-details">
                 <h1 id="username" class="username"></h1>
-                <div class="subscribe-info">
-                    <span id="subscribers" class="subscribers"></span>
-                    <button id="subscribe-button" class="subscribe-button">Subscribe</button>
-                </div>
+                
             </div>
         </div>
     </div>
@@ -32,23 +42,18 @@
 
     <script>
        
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const token1 = localStorage.getItem('accessToken'); // Get token from local storage
-           console.log(document.cookie);
-            
-            function getCookie(token1) {
-                const value = `; ${document.cookie}`;                
-                const parts = value.split(`; ${token1}=`);               
-                if (parts.length === 2) {
-                    return parts.pop().split(';').shift();
-                } else {
-                console.log(`Cookie ${token1} not found.`);
-                return undefined;
-            }
-
-            const token = getCookie('accessToken'); // Get token from cookies
-          
+        
+          document.addEventListener('DOMContentLoaded', async function() {
+            const span = document.getElementsByClassName('logout')[0]
+            const logoutLink = document.createElement('a');
+            logoutLink.href = '#';
+            logoutLink.textContent = 'Logout';
+            logoutLink.addEventListener('click', function() {
+                document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+                window.location.href = 'index.html';
+            })
+            span.appendChild(logoutLink)
+            const token = localStorage.getItem('accessToken'); // Get token from local storage
 
             if (!token) {
                 console.error('No auth token found');
@@ -61,14 +66,13 @@
            
             console.log('Fetching channel data...');
            // Fetch channel data
-           fetch(channelApiUrl, {
+           await fetch(channelApiUrl, {
                 method:'GET',
                 headers: {
                     'Authorization': `Bearer ${token}` // Include token in headers
-                },
-                credentials: 'include' // Ensure cookies are sent with the request
+                } 
             })
-            .then(response => {
+             .then(response => {
                 console.log('Channel response status:', response.status);
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -79,54 +83,56 @@
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                 }
-                return response.json();
-            })
+            return response.json();
+            }) 
             .then(responseData => {
-                const owner = data.data._id;
+                
                 console.log('Channel data received:', responseData);
                 const channelData = responseData.data;
                 // Update the profile page with the fetched data
                 document.getElementById('cover-image').src = channelData.coverImage;
                 document.getElementById('avatar').src = channelData.avatar;
-                document.getElementById('channel-name').textContent = channelData.username;
+                document.getElementById('username').innerHTML = channelData.username;
                 // document.getElementById('subscribers').textContent = `${channelData.subscribers} subscribers`;
-                const videosApiUrl = `http://localhost:8000/api/v1/videos/:owner`;
+                })
+                .catch(error => console.error('Error fetching user data:', error));
             
-             
-             // Fetch videos data
-                    return fetch(videosApiUrl, {
-                
+            
+            const ownerId=localStorage.getItem('userId')
+            const videoApiUrl=`http://localhost:8000/api/v1/videos/?owner=${ownerId}`
+            await fetch(videoApiUrl, {
                 method:'GET',
                 headers: {
                     'Authorization': `Bearer ${token}` // Include token in headers
-                },
-                credentials: 'include' // Ensure cookies are sent with the request
-            })
-            .then(response => {
-                console.log('Videos response status:', response.status);
+                } 
+            }).then(response => {
+                console.log('video response status:', response.status);
                 if (!response.ok) {
                     if (response.status === 401) {
-                        alert('Unauthorized access. Please log in again.');
-                        window.location.href = 'loginSignUp.html'; // Redirect to login page
-                        throw new Error('Unauthorized');
+                        alert('Could not find videos');
+                        
                     } else {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                 }
-                return response.json();
+            return response.json();
             })
             .then(videosData => {
                 console.log('Videos data received:', videosData);
                 const videoGrid = document.getElementById('video-grid');
+                let currentPlayingVideo = null;     
                 const videoList = videosData.data.data; // Access the videos array
 
                 videoList.forEach(video => {
                     const videoCard = document.createElement('div');
                     videoCard.className = 'video-card';
+                    
 
-                    const videoThumbnail = document.createElement('img');
+                    const videoThumbnail = document.createElement('video');
                     videoThumbnail.className = 'video-thumbnail';
                     videoThumbnail.src = video.videoFile;
+                   
+                   
 
                     const videoTitle = document.createElement('h3');
                     videoTitle.className = 'video-title';
@@ -136,15 +142,52 @@
                     videoDescription.className = 'video-description';
                     videoDescription.textContent = video.description;
 
+                    const videoPlayer = document.createElement('video');
+                    videoPlayer.className = 'video-player';
+                    videoPlayer.controls = true;
+                    videoPlayer.style.width = "100%";
+                    const videoSource = document.createElement('source');
+                    videoSource.src = video.videoFile;
+                    videoSource.type = 'video/mp4';
+                    videoPlayer.appendChild(videoSource);
+
+                   
+
                     videoCard.appendChild(videoThumbnail);
                     videoCard.appendChild(videoTitle);
                     videoCard.appendChild(videoDescription);
+                    videoCard.appendChild(videoPlayer);
                     videoGrid.appendChild(videoCard);
-                });
-            })
-            .catch(error => console.error('Error fetching videos data:', error));
+                    videoPlayer.style.display = 'none';
+                   
+                    videoThumbnail.addEventListener('click', () => {
+                if (currentPlayingVideo && currentPlayingVideo !== videoPlayer) {
+                    currentPlayingVideo.pause();
+                    currentPlayingVideo.style.display = 'none';
+                }
+                if (currentPlayingVideo === videoPlayer && !videoPlayer.paused) {
+                    videoPlayer.pause();
+                    videoPlayer.style.display = 'none';
+                } else {
+                    videoPlayer.style.display = 'block';
+                    videoPlayer.play();
+                    currentPlayingVideo = videoPlayer;
+                }
+            });
+
+            videoPlayer.addEventListener('play', () => {
+                if (currentPlayingVideo && currentPlayingVideo !== videoPlayer) {
+                    currentPlayingVideo.pause();
+                    currentPlayingVideo.style.display = 'none';
+                }
+                currentPlayingVideo = videoPlayer;
+            });
         });
-    }})
+    })
+    .catch(error => console.error('Error fetching videos data:', error));
+
+    
+        })
     </script>
 </body>
 </html>

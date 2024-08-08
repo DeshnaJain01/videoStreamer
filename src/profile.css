@@ -45,33 +45,6 @@ body {
     font-size: 2em;
     margin: 0;
 }
-
-.subscribe-info {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.subscribers {
-    margin-right: 20px;
-    font-size: 1em;
-    color: #555;
-}
-
-.subscribe-button {
-    padding: 10px 20px;
-    background-color: #cc0000;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-}
-
-.subscribe-button:hover {
-    background-color: #a30000;
-}
-
 .video-section {
     max-width: 1200px;
     margin: 0 auto;
@@ -88,29 +61,31 @@ body {
 }
 
 .video-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 20px;
+    display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
 }
 
 .video-card {
-    width: calc(33.333% - 20px);
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-    text-align: center;
+    display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #fff;
+            border-radius: 5px;
 }
 
 .video-thumbnail {
-    width: 100%;
-    border-radius: 8px;
+    width: 30px;
+    height: 50px;
+    border-radius: 5px;
+    
 }
 
 .video-title {
     font-size: 1.2em;
-    margin: 10px 0 5px;
+    margin: 10px 0 ;
 }
 
 .video-description {

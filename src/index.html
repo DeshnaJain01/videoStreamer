@@ -17,14 +17,17 @@
                     <a href="#">Blog </a>
                     <a href="#">About</a>
                     <a href="#">Contact</a>
-                    <a href="loginSignUp.html">Login/SignUp</a>
+                    <span class="login-signup-profile"></span>
                     
                 </nav>
             </div>
         </div>
     
-        <div class="hero">
-            <h1>Welcome to Our Service</h1>
+        <div class="video-section">
+           
+            <div id="video-grid" class="video-grid">
+                <!-- Video cards will be inserted here -->
+            </div>
         </div>
     
         <div class="container">
@@ -50,4 +53,104 @@
             </div>
         </div>
 </body>
+<script>
+    
+     document.addEventListener('DOMContentLoaded', async function() {
+        const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+        const span = document.getElementsByClassName('login-signup-profile')[0]
+    if (token) {
+        // User is logged in, update the navigation bar
+        const profileLink = document.createElement('a');
+        profileLink.href = 'profile.html';
+        profileLink.textContent = 'Profile';
+        span.appendChild(profileLink);
+        
+    } else {    
+        // User is not logged in, sh ow login/signup
+        const loginLink = document.createElement('a');
+        loginLink.href = 'loginSignUp.html';
+        loginLink.textContent = 'Login/SignUp';
+        
+        span.appendChild(loginLink);
+    }
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/videos/', {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const videosData = await response.json();
+                //console.log('Videos data received:', videosData);
+
+                const videoGrid = document.getElementById('video-grid');
+                let currentPlayingVideo = null;
+                const videoList = videosData.data.data; // Assuming the fetched data is the array of videos
+
+                videoList.forEach(video => {
+                    const videoCard = document.createElement('div');
+                    videoCard.className = 'video-card';
+
+                    // Thumbnail as an image element
+                    const videoThumbnail = document.createElement('video');
+                    videoThumbnail.className = 'video-thumbnail';
+                    videoThumbnail.src = video.videoFile;
+                    videoThumbnail.alt = video.title;
+
+                    const videoTitle = document.createElement('h3');
+                    videoTitle.className = 'video-title';
+                    videoTitle.textContent = video.title;
+
+                    const videoDescription = document.createElement('p');
+                    videoDescription.className = 'video-description';
+                    videoDescription.textContent = video.description;
+
+                    const videoPlayer = document.createElement('video');
+                    videoPlayer.className = 'video-player';
+                    videoPlayer.controls = true;
+                    videoPlayer.style.width = "100%";
+                    videoPlayer.style.display = 'none';
+
+                    const videoSource = document.createElement('source');
+                    videoSource.src = video.videoFile;
+                    videoSource.type = 'video/mp4';
+                    videoPlayer.appendChild(videoSource);
+
+                    videoCard.appendChild(videoThumbnail);
+                    videoCard.appendChild(videoTitle);
+                    videoCard.appendChild(videoDescription);
+                    videoCard.appendChild(videoPlayer);
+                    videoGrid.appendChild(videoCard);
+
+                    videoThumbnail.addEventListener('click', () => {
+                        if (currentPlayingVideo && currentPlayingVideo !== videoPlayer) {
+                            currentPlayingVideo.pause();
+                            currentPlayingVideo.style.display = 'none';
+                        }
+                        if (currentPlayingVideo === videoPlayer && !videoPlayer.paused) {
+                            videoPlayer.pause();
+                            videoPlayer.style.display = 'none';
+                        } else {
+                            videoPlayer.style.display = 'block';
+                            videoPlayer.play();
+                            currentPlayingVideo = videoPlayer;
+                        }
+                    });
+
+                    videoPlayer.addEventListener('play', () => {
+                        if (currentPlayingVideo && currentPlayingVideo !== videoPlayer) {
+                            currentPlayingVideo.pause();
+                            currentPlayingVideo.style.display = 'none';
+                        }
+                        currentPlayingVideo = videoPlayer;
+                    });
+                });
+            } catch (error) {
+                console.error('Error fetching videos data:', error);
+            }
+    
+    })
+</script>
 </html>

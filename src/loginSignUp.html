@@ -80,12 +80,18 @@
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await response.json();
+            
 
             if (response.ok) {
                 alert('Login successful');
+                const data = await response.json();
+                document.cookie = `token=${data.token}; path=/`; // Set cookie
+                window.location.href = 'index.html'; // Redirect to index page
+               
+                localStorage.setItem('accessToken', data.data.accessToken);
+                localStorage.setItem('userId', data.data.user._id);
                 // Redirect to profile page
-                window.location.href = 'profile.html'; // Update this URL as needed
+              //  window.location.href = 'profile.html'; // Update this URL as needed
             } else {
                 alert('Login failed: ' + (data.message || 'Unknown error'));
             }
@@ -109,12 +115,16 @@
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await response.json();
-
+           
             if (response.ok) {
                 alert('Sign-up successful');
-                // Redirect to profile page
-                window.location.href = 'profile.html'; // Update this URL as needed
+                const data = await response.json();
+                document.cookie = `token=${data.token}; path=/`; // Set cookie
+                
+                 localStorage.setItem('accessToken', data.accessToken);
+                 window.location.href = 'index.html';
+                 // Redirect to profile page
+               //s window.location.href = 'profile.html'; // Update this URL as needed
             } else {
                 alert('Sign-up failed: ' + (data.message || 'Unknown error'));
             }

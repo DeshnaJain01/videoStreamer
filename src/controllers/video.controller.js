@@ -7,7 +7,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {uploadOnCloudinary, deleteOnCloudinary} from "../utils/cloudinary.js"
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy='created_at', sortType='desc', userId } = req.query
+    const { page = 1, limit = 10, query, sortBy='created_at', sortType='desc', owner } = req.query
     //TODO: get all videos based on query, sort, pagination
    
         // Build the query object
@@ -17,9 +17,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
                     $text: { $search: query }
                 };
             }
-            if (userId) {
-                searchQuery.owner = userId;
-                console.log(userId)
+            if (owner) {
+                searchQuery.owner = owner;
+                console.log(owner)
             }
           // Calculate the skip value for pagination
           const skip = (page - 1) * limit;
@@ -113,9 +113,9 @@ return res.status(200).json(new ApiResponse(200,{createdVideo,cloudinaryVideo},"
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
-    const { userId } = req.params
-    console.log(userId);
-   const getVideo = await Video.findById(userId)
+    const { owner } = req.params
+    console.log(owner);
+   const getVideo = await Video.findById(owner)
     console.log(getVideo)    
 if(!getVideo||!getVideo.length===0){
         console.log("again db retrival issue")
